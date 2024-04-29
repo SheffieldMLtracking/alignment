@@ -1,0 +1,18 @@
+[project]
+name = "alignment"
+version = "0.0.1"
+authors = [
+  { name="Mike Smith", email="m.t.smith@sheffield.ac.uk" },
+]
+description = "Aligns multiple cameras in 3d"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: GNU General Public License v3.0",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/SheffieldMLtracking/alignment"
+Issues = "https://github.com/SheffieldMLtracking/alignment/issues"
