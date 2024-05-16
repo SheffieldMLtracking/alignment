@@ -6,7 +6,9 @@
 Given multiple cameras pointing at a similar volume, how do we find their relative orientations and locations? In my problem the 4-7 cameras are typically in a field, mounted at arbitary angles, and potentially may not all be able to see the same volume.
 
 # Other Related Tools
-
+- OpenCV's triangulation
+- https://strawlab.org/braid/
+  
 - Potential tools include:
 whycon https://github.com/lrse/whycon - finding markers in video.
 
