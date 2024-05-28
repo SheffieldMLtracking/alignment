@@ -28,3 +28,5 @@ https://arxiv.org/abs/2402.04883
 - Various image-matching approaches are related ... https://arxiv.org/abs/2003.01587
 
 - https://royalsocietypublishing.org/doi/10.1098/rsif.2018.0653
+
+- need to look at https://en.wikipedia.org/wiki/ARTag
