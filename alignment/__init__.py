@@ -133,6 +133,9 @@ class Alignment():
     
 def compute_orientation(allimages,allintervals=None,timeout=2000,max_count=None):
     """
+    Compute the 3d location, and orientation of the cameras (and calibration squares).
+    Returns an Alignment object (that contains the list of cameras and calibration squares)
+
     allimages = either:...
                         - a list of list of images (each list is from a different camera)
                         - a list of images (each image is from a different camera)
