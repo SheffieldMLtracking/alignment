@@ -27,6 +27,7 @@ class CalibrationSquareObservation():
             self.compute_ellipse()
         else:
             self.realobs = False
+        self.heldout = False
         
     def get_ellipse_parameters(self,params):
         """
@@ -119,7 +120,7 @@ class CalibrationSquareObservation():
             Parameters:
                 ax = plot axes to draw on"""
         if self.realobs: 
-            ax.plot(self.cornersx,self.photo.camera.res[1]-np.array(self.cornersy),'-w')
+            ax.plot(self.cornersx,self.photo.camera.res[1]-np.array(self.cornersy),'ow')
             #approximation approach....
             if self.dist: #if we've actually got a reliable ellipse...
                 #convenience variable
@@ -139,3 +140,6 @@ class CalibrationSquareObservation():
         plt.plot(coord[0],self.photo.camera.res[1]-coord[1],'xy') #rough location
         coords = self.photo.camera.get_pixel_loc(self.calsquare.get_corner_coords(),addstarttoend=True)
         plt.plot(coords[:,0],self.photo.camera.res[1]-coords[:,1],'+b-') #exact corners
+        
+        if hasattr(self,'predicted_coords'):
+            plt.plot(self.predicted_coords[:,0],self.photo.camera.res[1]-self.predicted_coords[:,1],'+y')

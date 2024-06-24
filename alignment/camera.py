@@ -20,7 +20,7 @@ class Camera():
             orientation[1:]=0
         self.loc = loc
         self.orientation = orientation
-        
+        self.photos = [] #a useful list linking back to the photos
         self.res = res
         
         self.hfov = hfov

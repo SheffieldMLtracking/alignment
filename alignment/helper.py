@@ -15,6 +15,7 @@ def getintervalstarts(times,interval_length):
     233.14 and 236.16. These can then be used to assign each time point to a particular
     time index.
     """
+    assert len(times)>0, "Empty list of times."
     intervals = []
     intervalstart = 0
     for t in sorted(times):
@@ -50,6 +51,7 @@ def addmissingobs_timeinterval(photos):
                 if len(same_idx_photo.observations)==0: continue
                 obs = CalibrationSquareObservation(same_idx_photo.observations[0].calsquare,photo)
                 photo.observations.append(obs)
+                continue #only want to add one? TODO Need to handle if multiple codes are in use in moving code situation
 
 def addmissingobs_stationarysquares(calsquares,photos):
     #we add synthetic observations here to see how well it does...
