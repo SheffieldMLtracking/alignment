@@ -29,6 +29,31 @@ class Camera():
     
         self.vfov = vfov
     
+    
+    def get_pixel_vector(pixel_position):
+        """
+        Given a pixel coordinate, what equivalent vector does this correspond to?
+        """
+        #convert pixel to a point in camera coordinates
+        self.res[0]/2+self.res[0]*(-pvec[:,1]/pvec[:,0])/self.hfov
+        
+        #local_vector = [1,?,?]
+        local_vector[0] = 1.0
+        local_vector[1] = -(self.hfov/self.res[0])*(pixel_position[0] - self.res[0]/2)
+        local_vector[2] = -(self.vfov/self.res[1])*(pixel_position[1] - self.res[1]/2)
+        
+
+        
+        r1 = R.from_euler('z', -self.orientation[0], degrees=False) #yaw
+        r2 = R.from_euler('Y', -self.orientation[1], degrees=False) #pitch (intrinsic rotation around y axis)    
+        r3 = R.from_euler('X', -self.orientation[2], degrees=False) #roll (intrinsic rotation around x axis)    
+        pvec = r1.apply(r2.apply(r3.apply(local_vector)))
+        
+        p = np.array(pvec + self.loc)        
+        
+        return p
+                
+    
     def get_global_loc(self, spatial_position):
         """
         Given a location relative to camera, compute global coordiates in 3d.

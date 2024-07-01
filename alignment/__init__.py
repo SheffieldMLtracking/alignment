@@ -109,6 +109,7 @@ class Alignment():
         for photo in self.photos:            
             for obs in photo.observations:
                 if obs.heldout: continue #this is going to be used for testing - so leave this observation out
+                if not obs.realobs: continue #this isn't a real observation (we won't have access to obs.cornersx).
                 pred_pix_loc = photo.camera.get_pixel_loc(obs.calsquare.get_corner_coords())
                 act_pix_loc = np.array([obs.cornersx,obs.cornersy]).T  
                 sumerr+=np.sum((pred_pix_loc-act_pix_loc)**2)
@@ -305,6 +306,7 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
     if allintervals is None:
         if max_count is None: max_count = 6
         for image in allimages:
+            image_reference = None
             if get_image_method is not None:
                 image_reference = image
                 image = get_image_method(image)
@@ -321,6 +323,7 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
             cam = Camera()
             cameras.append(cam)
             for image,interval in zip(images,intervals):
+                image_reference = None
                 if get_image_method is not None:
                     image_reference = image
                     image = get_image_method(image)

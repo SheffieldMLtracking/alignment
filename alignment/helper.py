@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 from alignment.calibrationsquareobservation import CalibrationSquareObservation
 
 class NotInIntervalException(Exception):
@@ -6,6 +7,30 @@ class NotInIntervalException(Exception):
     If we try to find the timeindex of a photo that doesn't have one (lies outside all the time intervals)
     """
     pass
+
+def guesscamtypegetscore(fn):
+    """
+    Used to guess if camera is greyscale or colour. If the return value is less than about 0.02 it's probably greyscale.
+    fn = filename.
+    """
+    photo = pickle.load(open(fn,'rb'))
+    img = photo['img']
+    if img is None: return np.NaN
+    #e.g. 0.0001 = greyscale, 0.7 = colour
+    score = np.abs(np.mean(img[0:-2:2,0:-2:2]/2+img[2::2,2::2]/2-img[1:-2:2,1:-2:2])/np.mean(img))
+    return score
+    
+def guesscamtype(path,camid):
+    """
+    Pass the 
+    Guesses camera type (returns a string either 'greyscale' or 'colour').
+    Hopefully temporary.
+   """
+    score = np.nanmean([guesscamtypegetscore(fn) for fn in getimgfilelist(path,camid)[:50:5]])
+    if score<0.02:
+        return 'greyscale'
+    else:
+        return 'colour'
 
 def getintervalstarts(times,interval_length):
     """
