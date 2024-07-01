@@ -30,7 +30,7 @@ class Camera():
         self.vfov = vfov
     
     
-    def get_pixel_vector(pixel_position):
+    def get_pixel_vector(self,pixel_position):
         """
         Given a pixel coordinate, what equivalent vector does this correspond to?
         """
@@ -80,22 +80,26 @@ class Camera():
         return pvec
         
         
-    def get_pixel_loc(self, coordinates,addstarttoend=False):
+    def get_pixel_local_vector(self,pixel_position):
         """
-        What 2d pixel location will 3d coordinates have for this camera.
+        Given a pixel coordinate, what equivalent vector does this correspond to?
+        
+        TODO Add a test:
+                vec = c.get_pixel_local_vector(np.array([123.0,456]))*100+c.loc
+                c.get_pixel_loc(vec)
+        will return 123,456
         """
-        pvec = self.get_local_loc(coordinates)
-        
-        
-        if len(pvec.shape)==1:
-            pvec = pvec[None,:]
-        #We look down the x-axis...with x-axis being distance
-        pvec[pvec[:,0]<0.001,0]=0.001 #nearly behind
-        pixel_position = np.array([self.res[0]/2+self.res[0]*(-pvec[:,1]/pvec[:,0])/self.hfov,
-                                   self.res[1]/2+self.res[1]*(-pvec[:,2]/pvec[:,0])/self.vfov]).T
-        
+        #local_vector = [1,?,?]
+        local_vector = np.array([0.0,0,0])
+        local_vector[0] = 1.0
+        local_vector[1] = -(self.hfov/self.res[0])*(pixel_position[0] - self.res[0]/2)
+        local_vector[2] = -(self.vfov/self.res[1])*(pixel_position[1] - self.res[1]/2)
 
-        #assert np.all(np.array(self.old_get_pixel_loc(cam,markercoords))==res)
-        if addstarttoend:
-            return np.c_[pixel_position,pixel_position[:,0]]
-        return pixel_position 
+        r1 = R.from_euler('z', -self.orientation[0], degrees=False) #yaw
+        r2 = R.from_euler('Y', -self.orientation[1], degrees=False) #pitch (intrinsic rotation around y axis)    
+        r3 = R.from_euler('X', -self.orientation[2], degrees=False) #roll (intrinsic rotation around x axis)    
+        pvec = r1.apply(r2.apply(r3.apply(local_vector)))
+
+        #p = np.array(pvec + self.loc)        
+        pvec/=np.sqrt(np.sum(pvec**2))
+        return pvec
