@@ -30,3 +30,5 @@ https://arxiv.org/abs/2402.04883
 - https://royalsocietypublishing.org/doi/10.1098/rsif.2018.0653
 
 - need to look at https://en.wikipedia.org/wiki/ARTag
+
+- https://www.noldus.com/track3d
