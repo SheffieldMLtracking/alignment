@@ -186,11 +186,11 @@ class Alignment():
         for cam in self.cameras:
             cam.xval_res = []
 
-        step = 1+len(xval_observations)//Nfolds
-        print("%d observations // %d Nfolds => %d step size" % (len(xval_observations),Nfolds,step))
-        if Ntest is None:
-            Ntest = step
-        #for splits in range(0,len(xval_observations),step):
+        #step = 1+len(xval_observations)//Nfolds
+        #print("%d observations // %d Nfolds => %d step size" % (len(xval_observations),Nfolds,step))
+        #if Ntest is None:
+        #    Ntest = step
+        ##for splits in range(0,len(xval_observations),step):
         for splits in range(0,Nfolds):
             print("Split %d/%d." % (1+splits,Nfolds))
             for obs in xval_observations:
@@ -266,7 +266,7 @@ class Alignment():
         #    print(" g  " if g else " c  ",end="")
          
                                          
-def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=None,get_image_method=None,store_small=None,usecache=True):
+def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=None,get_image_method=None,store_small=None,hfov = 0.846,usecache=True):
     """
     Returns an Alignment object (that contains the list of cameras and calibration squares),
     will have decoded codes from the photos, and be ready for running the alignment algorithm.
@@ -293,6 +293,8 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
 
     store_small = Whether to store the image as a small version
     
+    hfov = horizontal field of view, in radians.
+    
     usecache = whether to use the cache of decodings
     """
     photos = []
@@ -311,7 +313,7 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
                 image_reference = image
                 image = get_image_method(image)
                 if image is None: continue
-            cam = Camera()
+            cam = Camera(hfov=hfov)
             cameras.append(cam)
             photo = Photo(cam,image)
             photo.image_reference = image_reference #this allows us to link back to the file
@@ -320,7 +322,7 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
     else:
         if max_count is None: max_count = 1
         for images,intervals in zip(allimages,allintervals): 
-            cam = Camera()
+            cam = Camera(hfov=hfov)
             cameras.append(cam)
             for image,interval in zip(images,intervals):
                 image_reference = None
