@@ -6,6 +6,11 @@ from alignment.calibrationsquare import CalibrationSquare
 from alignment.calibrationsquareobservation import CalibrationSquareObservation
 from alignment.photo import Photo
 
+n_steps = 0
+def progressbar(x):
+    global n_steps
+    print("%04d" % n_steps,end="\r")
+    n_steps+=1
 
 class Alignment():
     """
@@ -126,7 +131,7 @@ class Alignment():
         """
         init_params = self.get_params_from_cameras_and_calsqrs()
         self.tempcount = 0
-        result = scipy.optimize.minimize(self.costfn_secondpass,init_params,method=method)#, bounds=bounds)
+        result = scipy.optimize.minimize(self.costfn_secondpass,init_params,method=method,callback=progressbar)#, bounds=bounds)
         self.secondpass_optimize_result = result
         self.setcameras_and_calsqrs(result.x)
 
@@ -144,7 +149,9 @@ class Alignment():
         
         The method ignores observations which have 'heldout' set to True.
         """
+        print("Starting first pass...")
         self.firstpass()
+        print("Starting second pass...")
         self.secondpass()
     
     def draw(self):
@@ -313,7 +320,7 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
                 image_reference = image
                 image = get_image_method(image)
                 if image is None: continue
-            cam = Camera(hfov=hfov)
+            cam = Camera(hfov=hfov,res=image.shape[::-1])
             cameras.append(cam)
             photo = Photo(cam,image)
             photo.image_reference = image_reference #this allows us to link back to the file
@@ -321,15 +328,18 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
             photos.append(photo)
     else:
         if max_count is None: max_count = 1
-        for images,intervals in zip(allimages,allintervals): 
-            cam = Camera(hfov=hfov)
-            cameras.append(cam)
+        for images,intervals in zip(allimages,allintervals):  #a list of lists of images, each list is from a different camera
+            firstimg = True
             for image,interval in zip(images,intervals):
                 image_reference = None
                 if get_image_method is not None:
                     image_reference = image
                     image = get_image_method(image)
                     if image is None: continue
+                if firstimg: #create new camera object
+                    cam = Camera(hfov=hfov,res=image.shape[::-1])
+                    cameras.append(cam)
+                    firstimg = False
                 photo = Photo(cam,image,interval)
                 photo.decode(calsquares,timeout=timeout,max_count=max_count,store_small=store_small,usecache=usecache)
                 photo.image_reference = image_reference #this allows us to link back to the file
