@@ -88,10 +88,10 @@ class Photo():
         """
         Draws the photo (with the associated observations).
         """
-        img = 60*self.image/np.mean(self.image)
+        img = 60*self.image.astype(float)/np.mean(self.image)
         if self.store_small:
             img = img.repeat(4, axis=0).repeat(4, axis=1)
         img[img>200] = 200
         plt.imshow(img,cmap='gray',clim=[0,255])
         for obs in self.observations:
-            obs.draw(plt.gca())
+            obs.draw(plt.gca()) 
