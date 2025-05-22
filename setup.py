@@ -10,5 +10,5 @@ setup(
   download_url = 'https://github.com/SheffieldMLtracking/alignment.git',
   keywords = ['registration','cameras','3d','pose estimation','position','orientation'],
   classifiers = [],
-  install_requires=['numpy']
+  install_requires=['numpy','pylibdmtx @ git+https://github.com/SheffieldMLtracking/pylibdmtx']
 )
