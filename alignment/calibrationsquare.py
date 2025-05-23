@@ -7,7 +7,7 @@ class CalibrationSquare():
     The calibration is done with QR codes. The 3d locations and orientations etc are defined by this class:
     note that each CalibrationSquare might be observed by multiple cameras in multiple photos.
     """
-    def __init__(self, calsqrid=None, loc=None, orientation=None, width=None):
+    def __init__(self, calsqrid=None, loc=None, orientation=None, width=0.168):
         """
         calsqrid = the id of the calibration square (this might either be just the code, if the squares don't move, or a code+time combination, if the squares can move!
         loc = location in 3d (initialised randomly by default)

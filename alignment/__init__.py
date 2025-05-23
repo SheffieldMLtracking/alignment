@@ -5,6 +5,23 @@ from alignment.camera import Camera
 from alignment.calibrationsquare import CalibrationSquare
 from alignment.calibrationsquareobservation import CalibrationSquareObservation
 from alignment.photo import Photo
+from numpy.linalg import solve, norm
+
+
+def getmidpoint(startA,startB,vectA,vectB):
+    # for two skew lines, defined by start points and vectors,
+    # find midpoint nearest to both
+    #based on https://math.stackexchange.com/questions/1993953/closest-points-between-two-lines
+    UC = np.cross(vectB, vectA);
+    UC /= norm(UC)
+    RHS = startB - startA
+    LHS = np.array([vectA, -vectB, UC]).T
+    res = solve(LHS, RHS)
+    dist = res[2]
+    midpoint = (((res[0]*vectA)+startA)+((res[1]*vectB)+startB))/2
+    return midpoint,dist
+    
+# prints "[ 0. -0.  1.]"
 
 n_steps = 0
 def progressbar(x):
@@ -271,9 +288,29 @@ class Alignment():
         #print("       ",end="")
         #for g in greyscale:
         #    print(" g  " if g else " c  ",end="")
+
+    def get3dpoint(self,cam0_coords,cam1_coords):
+        """
+        Given 2d photo locations for camera 0 and camera 1, reconstruct 3d location.
+        
+        - cam0_coords: An Nx2 array of pixel coordinates for camera 0
+        - cam1_coords: An Nx2 array of pixel coordinates for camera 1
+        returns a tuple (Nx3 array of locations, N array of distances between the 'intersecting' lines)
+        """
+        loc0 = self.cameras[0].loc
+        loc1 = self.cameras[1].loc
+        coords3d = []
+        distances = []
+        for coord0, coord1 in zip(cam0_coords,cam1_coords):
+            vec0 = self.cameras[0].get_pixel_local_vector(coord0)
+            vec1 = self.cameras[1].get_pixel_local_vector(coord1)
+            pos, d = getmidpoint(loc0,loc1,vec0,vec1)
+            coords3d.append(pos)
+            distances.append(d)
+        return np.array(coords3d), np.array(distances)        
          
                                          
-def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=None,get_image_method=None,store_small=None,hfov = 0.846,usecache=True):
+def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=None,get_image_method=None,store_small=None,hfov = 0.846,usecache=True,calsquarewidth=None):
     """
     Returns an Alignment object (that contains the list of cameras and calibration squares),
     will have decoded codes from the photos, and be ready for running the alignment algorithm.
@@ -303,6 +340,8 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
     hfov = horizontal field of view, in radians.
     
     usecache = whether to use the cache of decodings
+    
+    calsquarewidth = size of one side of the calibration square (defaults if None to 0.168 i.e. 16.8cm)
     """
     photos = []
     calsquares = {}
@@ -324,7 +363,9 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
             cameras.append(cam)
             photo = Photo(cam,image)
             photo.image_reference = image_reference #this allows us to link back to the file
-            photo.decode(calsquares,timeout=timeout,max_count=max_count,store_small=store_small,usecache=usecache)
+
+            photo.decode(calsquares,timeout=timeout,max_count=max_count,store_small=store_small,usecache=usecache,calsquarewidth=calsquarewidth)
+
             photos.append(photo)
     else:
         if max_count is None: max_count = 1
@@ -341,7 +382,10 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
                     cameras.append(cam)
                     firstimg = False
                 photo = Photo(cam,image,interval)
+
                 photo.decode(calsquares,timeout=timeout,max_count=max_count,store_small=store_small,usecache=usecache)
+
                 photo.image_reference = image_reference #this allows us to link back to the file
+
                 photos.append(photo)
     return Alignment(photos,calsquares,cameras)

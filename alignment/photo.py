@@ -30,14 +30,14 @@ class Photo():
         self.image = image
         self.observations = []
             
-    def decode(self,calsquares,timeout=None,decodes=None,max_count=1,usecache=True,store_small=False):
+    def decode(self,calsquares,timeout=None,decodes=None,max_count=1,usecache=True,store_small=False,calsquarewidth=None):
         """
          - calsquares = Pass the dictionary of current calibration squares (to potentially add to)
          - timeout = if we want to stop decoding early
          - max_count = default 1 (assumes 0 to 1 calibration squares are in the photo).
          - usecache = default True (only decodes if cache not found).
          - store_small = whether to only save a small version after decoding
-         
+         - calsquarewith = size of one side of the calibration square (defaults if None to 0.168 i.e. 16.8cm)
          for each decoded square,
          - if the square is not in the calsquares list: adds a CalibrationSquare to the calsquares list
          - calls the 'addPhoto' method for the calsquare (this adds the actual observation of that square).
@@ -59,24 +59,25 @@ class Photo():
                 print("Failed to find cache file")
                 imgcache = {}
             if (imghash in imgcache) and (usecache): #in cache...
-                decodes = imgcache[imghash]
-                #print("c",end="")
+                decodes = imgcache[imghash]                
+
             else: #not in cache, need to decode...
-                #print("Not in cache, decoding...")
-                #print("d",end="")
+
+
                 #TODO Make decode import (and PIL import) optional, and allow user to supply the decode info
                 img = Image.fromarray(im.astype(np.uint8))
                 decodes = decode(img,max_count=max_count,timeout=timeout) #9.74s without max_count; 51ms with max_count=1
                 imgcache[imghash] = decodes
             pickle.dump(imgcache,open(cachefilename,'wb'))
-            #print("%d" % len(decodes),end="")
+
         for dec in decodes:
             calsqrid = str(dec.data)
             if self.timeindex is not None:
                 calsqrid = calsqrid+str(self.timeindex)
             if calsqrid not in calsquares:
-                calsquares[calsqrid] = CalibrationSquare(calsqrid)            
+                calsquares[calsqrid] = CalibrationSquare(calsqrid,width=calsquarewidth)            
             calsquares[calsqrid].addPhoto(self,dec)
+
         if store_small:
             #smallrep = self.image[::10,::10].copy()
             smallrep = im[::4,::4].copy()
