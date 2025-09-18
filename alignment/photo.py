@@ -44,10 +44,9 @@ class Photo():
         """
         self.store_small = store_small
         
-        #im = self.image*10 #the library seems to work better if I brighten the image...
+        im = self.image #*10 #the library seems to work better if I brighten the image...
         #im[im>255] = 255
-        im = 60*self.image.astype(float)/np.mean(self.image.astype(float)) #the library seems to work better if I brighten the image...
-        im[im>255] = 255
+        
         
         if decodes is None: #we haven't been given the codes...
             #try the cache...
@@ -55,19 +54,26 @@ class Photo():
             cachefilename = user_cache_dir('btalignment')+'decodecache.pkl'
             try:
                 imgcache = pickle.load(open(cachefilename,'rb'))
-            except FileNotFoundError:
-                print("Failed to find cache file")
+            except:# FileNotFoundError:
+                print("Failed to find/read cache file")
                 imgcache = {}
             if (imghash in imgcache) and (usecache): #in cache...
-                decodes = imgcache[imghash]                
+                decodes = imgcache[imghash]
+                print("[c]",end="")
 
             else: #not in cache, need to decode...
-
+                print("...",end="")
+                #print("(decoding) ",end="")
 
                 #TODO Make decode import (and PIL import) optional, and allow user to supply the decode info
-                img = Image.fromarray(im.astype(np.uint8))
-                decodes = decode(img,max_count=max_count,timeout=timeout) #9.74s without max_count; 51ms with max_count=1
-                imgcache[imghash] = decodes
+                for i in range(2):
+                    img = Image.fromarray(im.astype(np.uint8))
+                    decodes = decode(img,max_count=max_count,timeout=timeout) #9.74s without max_count; 51ms with max_count=1
+                    
+                    if len(decodes)==0: #didn't find a code, let's repeat but brighten image...
+                        im = 60*self.image.astype(float)/np.mean(self.image.astype(float)) #the library seems to work better if I brighten the image...
+                        im[im>255] = 255
+                imgcache[imghash] = decodes                        
             pickle.dump(imgcache,open(cachefilename,'wb'))
 
         for dec in decodes:
@@ -80,7 +86,7 @@ class Photo():
 
         if store_small:
             #smallrep = self.image[::10,::10].copy()
-            smallrep = im[::4,::4].copy()
+            smallrep = im[::100,::100].copy()
             self.image = None
             gc.collect()
             self.image = smallrep #compact to 1% of original size            
@@ -91,7 +97,7 @@ class Photo():
         """
         img = 60*self.image.astype(float)/np.mean(self.image)
         if self.store_small:
-            img = img.repeat(4, axis=0).repeat(4, axis=1)
+            img = img.repeat(10, axis=0).repeat(10, axis=1)
         img[img>200] = 200
         plt.imshow(img,cmap='gray',clim=[0,255])
         for obs in self.observations:

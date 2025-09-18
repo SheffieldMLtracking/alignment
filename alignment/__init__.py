@@ -173,7 +173,7 @@ class Alignment():
     
     def draw(self):
         maxintervals = max([photo.timeindex for photo in self.photos])
-        for i in range(maxintervals):
+        for i in range(maxintervals+1):
             for j in range(len(self.cameras)):
                 plt.subplot(maxintervals,len(self.cameras),i*len(self.cameras)+j+1)
                 for photo in self.photos:
@@ -197,7 +197,7 @@ class Alignment():
         summary_N_photos,summary_N_obs = self.compute_summary_table()
         maxintervals = max([photo.timeindex for photo in self.photos])
         xval_observations = []
-        for timeindex in range(maxintervals):
+        for timeindex in range(maxintervals+1):
             if np.sum(summary_N_obs[timeindex,:])<=2: continue #if there are 3+ photos at this time, we can use it for x-val
             for photo in self.photos:
                 if (photo.timeindex != timeindex): continue
@@ -242,7 +242,7 @@ class Alignment():
             print("  ".join(["%0.1f" % xval for xval in cam.xval_res]))
                                           
     def compute_summary_table(self):
-        maxintervals = max([photo.timeindex for photo in self.photos])
+        maxintervals = 1+max([photo.timeindex for photo in self.photos])
         summary_N_obs = np.zeros([maxintervals,len(self.cameras)])
         summary_N_photos = np.zeros([maxintervals,len(self.cameras)])
         
@@ -271,7 +271,7 @@ class Alignment():
             for cam in self.cameras:
                 print("%7s " % cam.id[:7],end="")
         print(" ")
-        for timeindex in range(maxintervals):
+        for timeindex in range(maxintervals+1):
             print(" %4d  " % timeindex,end="")
             for cami,camera in enumerate(self.cameras):
                 N_obs = summary_N_obs[timeindex,cami]
@@ -308,7 +308,26 @@ class Alignment():
             coords3d.append(pos)
             distances.append(d)
         return np.array(coords3d), np.array(distances)        
-         
+
+def select_best_indices(summary_N_obs,bestN = 10):
+    """
+    Finds the best images to use for calibration using the summary of which cameras saw the code at different times.
+    """
+    new = []
+    for i in range(summary_N_obs.shape[1]):
+        for j in range(i+1,summary_N_obs.shape[1]):
+            new.append(summary_N_obs[:,i].astype(bool) & summary_N_obs[:,j].astype(bool))
+    a = np.array(new).T.astype(float)
+    #a = np.c_[a,new]
+    
+    best = []
+    for it in range(bestN):
+        index = np.argmax(np.sum(a,1))
+        if np.max(np.sum(a,1))==0: break #all worthwhile rows are used. stop early.
+        a = a/(1+a[index])
+        a[index,:] = 0
+        best.append(index)
+    return best         
                                          
 def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=None,get_image_method=None,store_small=None,hfov = 0.846,usecache=True,calsquarewidth=None):
     """
@@ -353,7 +372,8 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
 
     if allintervals is None:
         if max_count is None: max_count = 6
-        for image in allimages:
+        for i,image in enumerate(allimages):
+            print("\rProcessing image %4d/%4d" % (i,len(allimages)),end="")
             image_reference = None
             if get_image_method is not None:
                 image_reference = image
@@ -369,9 +389,11 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
             photos.append(photo)
     else:
         if max_count is None: max_count = 1
-        for images,intervals in zip(allimages,allintervals):  #a list of lists of images, each list is from a different camera
+
+        for i,(images,intervals) in enumerate(zip(allimages,allintervals)):  #a list of lists of images, each list is from a different camera            
             firstimg = True
-            for image,interval in zip(images,intervals):
+            for j,(image,interval) in enumerate(zip(images,intervals)):
+                print("\rProcessing image group %4d/%4d: image %4d/%4d" % (i,len(allintervals),j,len(intervals)),end="")
                 image_reference = None
                 if get_image_method is not None:
                     image_reference = image
@@ -386,6 +408,6 @@ def build_alignment_object(allimages,allintervals=None,timeout=2000,max_count=No
                 photo.decode(calsquares,timeout=timeout,max_count=max_count,store_small=store_small,usecache=usecache)
 
                 photo.image_reference = image_reference #this allows us to link back to the file
-
                 photos.append(photo)
+    print("")                
     return Alignment(photos,calsquares,cameras)
